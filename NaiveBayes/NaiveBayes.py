@@ -55,7 +55,7 @@ class NavieBayes:
 
     def classify(self, prob_num_dict, prob_dict, data, class_num):
         """
-        根据训练得到的概率密度函数，对待测数据分类
+        根据训练得到的概率密度函数，对待测数据分类,（多维数据）
         :param prob_num_dict: P（Xi/C）
         :param prob_dict:  P（C）
         :param data: 待测数据
@@ -105,3 +105,32 @@ class NavieBayes:
         right_num = np.sum(comp_mat == 0) #统计0的元素的个数，即真实值与预测值相同的个数
         return 1.0*right_num/num
 
+    def predict(self, prob_num_dict, prob_dict, data, class_num):
+        """
+        根据训练得到的概率密度函数，对待测数据分类（一维）
+        :param prob_num_dict: P（Xi/C）
+        :param prob_dict:  P（C）
+        :param data: 待测数据
+        :param class_num: 类别个数
+        :return: 预测的数据类别
+        """
+        n = len(data)
+        class_prob = -np.inf
+        class_predict = -1
+        for i in range(0, class_num):  #遍历每一个类别
+            prob_class = prob_num_dict.get(i+1)
+            data_var = prob_dict.get(i+1).get("var")
+            data_mean = prob_dict.get(i+1).get("mean")
+            m1, n1 = np.shape(data_mean)
+            if n != n1:
+                print(" Test data feature num isn't right , test data index:"+str(j)+"class index:"+str(i+1))
+            else:
+                #统计待分类数据的概率
+                prob_data_class = np.multiply(1.0 / np.sqrt(2 * np.pi * data_var),
+                                            np.exp(-1.0 * np.square(data-data_mean) / (2 * data_var)))
+                #计算（(P(x1/c)*P(x2/c)*...*P(xn/c))P(c）)，因值较小，且乘法不好运算，所以此处取对数求和
+                prob = np.sum(np.log(prob_data_class))+np.log(prob_class)
+                if class_prob < prob:
+                    class_predict = i + 1
+                    class_prob = prob
+        return class_predict #记录预测的类别
