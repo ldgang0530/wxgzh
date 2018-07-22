@@ -49,11 +49,12 @@ class GBDT:
         regress_dict = {}
         k = 0
         while var_value > threshold and iter_num > 0:
-            split_point, split_index = self.basic_tree(x_data_iter, y_data_iter, regress_dict, x_data, y_data) #选择最佳分割点
+            split_point, split_index = self.basic_tree(x_data_iter, y_data_iter, regress_dict, x_data, y_data) #基本学习器
             num = np.size(y_data_iter)
             y1 = np.mat(y_data_iter)[0, 0:split_index+1]
             y2 = np.mat(y_data_iter)[0, split_index+1:num]
-            regress_dict.update({k:{"split_point": split_point, "lmean": np.mean(y1), "rmean": np.mean(y2)}})  #可以认为此处就相当于一棵树，该树只有根节点
+            # 此处就相当于一棵树，该树只有根节点
+            regress_dict.update({k:{"split_point": split_point, "lmean": np.mean(y1), "rmean": np.mean(y2)}})
             x_data_iter = x_data_iter
             y1 = y1 - np.mean(y1) #原数据减去均值
             y2 = y2 - np.mean(y2)
