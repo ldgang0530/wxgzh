@@ -26,14 +26,17 @@ class KMeans:
         """
         iter_num = self.iter_num
         x_data_mat = np.mat(x_data)
+        m1, n1 = np.shape(x_data_mat)
         #按列求最大最小值
         x_min = np.min(x_data_mat, axis=0)
         x_max = np.max(x_data_mat, axis=0)
         #最大减去最小，因要做除法，故须删除掉最大与最小值相同的情况，这也减少了计算量
         den = x_max - x_min
         idx = np.where(den != 0)
+        idy = np.where(den == 0)
         x_min_div = x_min[idx]
         x_max_div = x_max[idx]
+        x_equal = x_data_mat[:, idy[1]]
         x_data_mat_t = x_data_mat.transpose().getA()
         x_data_div = np.mat(x_data_mat_t[idx[1]]).transpose()
         #归一化，可以有效避免不同特征值之间量的影响，
@@ -51,7 +54,8 @@ class KMeans:
             for i in range(0, self.k):
                 class_data.append([])
             for i in range(0, m):
-                x_bias = np.sum(np.square(class_center - normal_data_mat[i, :]), axis=1) #计算数据中心与各个数据样本的欧式距离（未求平方根，直接求平方和）
+                # 计算数据中心与各个数据样本的欧式距离（未求平方根，直接求平方和）
+                x_bias = np.sum(np.square(class_center - normal_data_mat[i, :]), axis=1)
                 c_idx = np.argmin(x_bias) #选择与样本距离最小的中心作为该样本的类别中心
                 class_data[c_idx].append(normal_data_mat[i, :].getA()[0])
             class_data_list = []
@@ -59,7 +63,41 @@ class KMeans:
                 class_data_list.append(np.mean(np.mat(class_data[i]), axis=0).getA()[0])  #求每个类别新的数据中心
             class_center = np.mat(class_data_list)
             iter_num = iter_num - 1
-        return class_center, class_data  #返回数据中心与对应的数据集
+
+        #下面的操作主要是为了还原为归一化前的数据
+        result_center = np.add(np.multiply(class_center, x_max_div - x_min_div), x_min_div).getA()  #聚类中心恢复
+        k = 0
+        m, n = np.shape(result_center)
+        v1_data = np.mat(np.ones(m)).transpose()
+        for i in idy[1]:
+            if result_center[:, i:].size == 0:
+                v1_mat = x_equal[0, k]*v1_data
+            else:
+                v1_mat = np.hstack((x_equal[0, k]*v1_data, result_center[:, i:]))
+            if result_center[:, :i].size == 0:
+                result_center = v1_mat
+            else:
+                result_center = np.hstack((result_center[:, :i], v1_mat))
+            k = k+1
+        result_class_data = []  #聚类对应的数据恢复
+        for data in class_data:
+            data_mat = np.mat(data)
+            data_mat = np.add(np.multiply(data_mat, x_max_div - x_min_div), x_min_div).getA()
+            m1, n1 = np.shape(data_mat)
+            v2_data = np.mat(np.ones(m1)).transpose()
+            k = 0
+            for i in idy[1]:
+                if data_mat[:, i:].size == 0:
+                    v2_mat = x_equal[0, k] * v2_data
+                else:
+                    v2_mat = np.hstack((x_equal[0, k] * v2_data, data_mat[:, i:]))
+                if data_mat[:, :i].size == 0:
+                    data_mat = v2_mat
+                else:
+                    data_mat = np.hstack((data_mat[:, :i], v2_mat))
+                k = k + 1
+            result_class_data.append(data_mat)
+        return result_center, result_class_data  #返回数据中心与对应的数据集
 
 
 
