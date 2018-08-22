@@ -1,0 +1,4 @@
+说明：
+opencv_1.py  ~  opecv_17.py都是基于 《OpenCV-Python中文教程》（https://www.kancloud.cn/aollo/aolloopencv/261446）的学习程序，可直接从教程中学习
+
+videoProject.py是基于上述教程的学习，实现的小案例
